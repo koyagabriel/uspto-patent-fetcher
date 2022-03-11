@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  db:
+    image: postgres
+    container_name: uspto_db
+    env_file:
+      - .env
+    ports:
+      - "5437:5432"
+
+  patent_fetcher:
+    build: .
+    image: patent_fetcher
+    depends_on:
+      - db
+    env_file:
+      - .env
+    volumes:
+      - .:/var/www
