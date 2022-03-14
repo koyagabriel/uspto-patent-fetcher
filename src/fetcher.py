@@ -15,10 +15,11 @@ from .utils import (
 
 class Fetcher:
 
-    def __init__(self, start_date, end_date):
+    def __init__(self, start_date, end_date, dirname="tmp"):
         self.start_date = start_date
         self.end_date = end_date
         self.total_number_of_records = 0
+        self.dirname = dirname
         self.filenames = []
         self.errors = []
 
@@ -48,10 +49,10 @@ class Fetcher:
             rows = self.total_number_of_records - start
 
         try:
-            click.secho(f"Downloading patent record from {start} to {start + rows} .......")
+            click.secho(f"Downloading patent record from {start + 1} to {start + rows} .......")
             response = fetch_data(self.start_date, self.end_date, start=start, rows=rows)
             data = response.json()["results"]
-            filename = f"tmp/patent_data_{start + 1}_{start + rows}.json"
+            filename = f"{self.dirname}/patent_data_{start + 1}_{start + rows}.json"
             persist_data_to_json_file(filename, data)
             return True, filename
         except Exception:
