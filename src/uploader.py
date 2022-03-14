@@ -77,7 +77,7 @@ class DatabaseUploader:
                 patents.create(conn)
                 conn.dispose()
                 click.secho(f" => Successfully created {table_name} table.\n", fg="green")
-                return
+                return True
         except Exception as err:
             err.args = (f" * An error occurred while trying to create {table_name} table", )
             raise
