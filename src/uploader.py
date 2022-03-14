@@ -10,7 +10,6 @@ from sqlalchemy.pool import NullPool
 
 
 class DatabaseUploader:
-    DATABASE_UPLOAD_ERROR = "Database connection failed!"
     COLUMN_MAPPER = {
         "patentNumber": "patent_number",
         "patentApplicationNumber": "patent_application_number",
@@ -34,13 +33,13 @@ class DatabaseUploader:
             raise ValueError("There is nothing to upload into the database.")
 
         if not self.username:
-            raise ValueError(f"{self.DATABASE_UPLOAD_ERROR}! Database username is missing, please provide a username.")
+            raise ValueError("Database username is missing, please provide a username.")
 
         if not self.password:
-            raise ValueError(f"{self.DATABASE_UPLOAD_ERROR}! Database password is missing, please provide a password")
+            raise ValueError("Database password is missing, please provide a password")
 
         if not self.database:
-            raise ValueError(f"{self.DATABASE_UPLOAD_ERROR}! Database name is missing, please provide oa database name")
+            raise ValueError("Database name is missing, please provide oa database name")
 
         self.database_url = f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
 
@@ -53,8 +52,9 @@ class DatabaseUploader:
             conn.connect()
             conn.dispose()
             click.secho(" => Connection established!!!\n", fg="green")
+            return True
         except OperationalError as err:
-            err.args = (f" * {self.DATABASE_UPLOAD_ERROR}! Could not connect to the database server. "
+            err.args = (" * Could not connect to the database server. "
                         f"Please check your database configuration",)
             raise
 
@@ -91,10 +91,10 @@ class DatabaseUploader:
             con = create_engine(self.database_url, poolclass=NullPool)
             df.to_sql(self.table_name, con=con, if_exists="append", index=False, method="multi")
             con.dispose()
-            click.secho(f"    => Successfully inserted patent record from {start} to {end} into the database.", fg="green")
+            click.secho(f" => Successfully inserted patent record from {start} to {end} into the database.", fg="green")
             return True, None
         except Exception:
-            error_msg = f"    * Failed to insert patent record from {start} to {end} into the database"
+            error_msg = f" * Failed to insert patent record from {start} to {end} into the database"
             click.secho(error_msg, fg="red")
             return False, error_msg
 
