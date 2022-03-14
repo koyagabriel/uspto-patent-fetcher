@@ -15,5 +15,13 @@ services:
       - db
     env_file:
       - .env
-    volumes:
-      - .:/var/www
+
+  tests:
+    build:
+      context: .
+      dockerfile: dockerfile-test
+    image: pf_test_image
+    depends_on:
+      - db
+
+
