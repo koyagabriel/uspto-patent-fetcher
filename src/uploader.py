@@ -1,3 +1,4 @@
+import click
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor
 from sqlalchemy import (
@@ -9,7 +10,7 @@ from sqlalchemy.pool import NullPool
 
 
 class DatabaseUploader:
-    DATABASE_UPLOAD_ERROR = "Database upload failed!"
+    DATABASE_UPLOAD_ERROR = "Database connection failed!"
     COLUMN_MAPPER = {
         "patentNumber": "patent_number",
         "patentApplicationNumber": "patent_application_number",
@@ -47,29 +48,40 @@ class DatabaseUploader:
 
     def test_database_connection(self):
         try:
+            click.secho(" => Testing database connection!!!")
             conn = create_engine(self.database_url)
             conn.connect()
             conn.dispose()
+            click.secho(" => Connection established!!!\n", fg="green")
         except OperationalError as err:
-            err.args = (f"{self.DATABASE_UPLOAD_ERROR}! Could not connect to the database server. "
+            err.args = (f" * {self.DATABASE_UPLOAD_ERROR}! Could not connect to the database server. "
                         f"Please check your database configuration",)
             raise
 
     def create_table(self, table_name):
+        click.secho(f"Creating database table {table_name} if it doesn't exist!!!")
         conn = create_engine(self.database_url)
         metadata_obj = MetaData()
-        if not inspect(conn).has_table(table_name):
-            patents = Table(table_name, metadata_obj,
-                            Column("id", Integer, primary_key=True),
-                            Column("patent_number", String()),
-                            Column("patent_application_number", String()),
-                            Column("assignee_entity_name", String()),
-                            Column("filing_date", String()),
-                            Column("grant_date", String()),
-                            Column("invention_title", String()),
-                            )
-            patents.create(conn)
-            conn.dispose()
+        try:
+            if not inspect(conn).has_table(table_name):
+                patents = Table(table_name, metadata_obj,
+                                Column("id", Integer, primary_key=True),
+                                Column("patent_number", String()),
+                                Column("patent_application_number", String()),
+                                Column("assignee_entity_name", String()),
+                                Column("filing_date", String()),
+                                Column("grant_date", String()),
+                                Column("invention_title", String()),
+                                )
+
+                patents.create(conn)
+                conn.dispose()
+                click.secho(f" => Successfully created {table_name} table.\n", fg="green")
+                return
+        except Exception as err:
+            err.args = (f" * An error occurred while trying to create {table_name} table", )
+            raise
+        click.secho(f" => The table named {table_name} already exist in the database\n", fg="green")
 
     def upload_patent_data(self, filename):
         start, end = filename.split(".")[0].split("_")[-2:]
@@ -79,14 +91,16 @@ class DatabaseUploader:
             con = create_engine(self.database_url, poolclass=NullPool)
             df.to_sql(self.table_name, con=con, if_exists="append", index=False, method="multi")
             con.dispose()
-            print(f"Successfully saved patent record from {start} to {end} into the database.")
+            click.secho(f"    => Successfully inserted patent record from {start} to {end} into the database.", fg="green")
             return True, None
-        except Exception as err:
-            print(err)
-            return False, f"Failed to save patent record from {start} to {end} into the database"
+        except Exception:
+            error_msg = f"    * Failed to insert patent record from {start} to {end} into the database"
+            click.secho(error_msg, fg="red")
+            return False, error_msg
 
     def process(self):
         self.create_table(self.table_name)
+        click.secho("Starting database insertion of patent records ....")
         with ProcessPoolExecutor() as executor:
             results = executor.map(self.upload_patent_data, self.filenames)
 
