@@ -21,7 +21,7 @@ def patent_fetcher(start_date, end_date):
         click.secho("Uploading patent records to database\n")
         load_dotenv()
         database_config = {
-            "host": os.getenv("DB_HOST"),
+            "host": os.getenv("DB_HOST", "db"),
             "password": os.getenv("POSTGRES_PASSWORD"),
             "username": os.getenv("POSTGRES_USER"),
             "database": os.getenv("POSTGRES_DB"),

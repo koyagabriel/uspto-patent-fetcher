@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from src.uploader import DatabaseUploader
 
 load_dotenv()
-url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('DB_HOST')}:5432/test_database"
+url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('DB_HOST', 'db')}:5432/test_database"
 
 
 class DatabaseUploaderTestCase(unittest.TestCase):
@@ -14,7 +14,7 @@ class DatabaseUploaderTestCase(unittest.TestCase):
     def setUp(self):
         load_dotenv()
         self.database_config = {
-            "host": os.getenv("DB_HOST"),
+            "host": os.getenv("DB_HOST", "db"),
             "password": os.getenv("POSTGRES_PASSWORD"),
             "username": os.getenv("POSTGRES_USER"),
             "database": "test_database",
