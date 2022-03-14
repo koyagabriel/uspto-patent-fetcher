@@ -1,7 +1,8 @@
 import os
 import click
 from dotenv import load_dotenv
-from src import Fetcher, DatabaseUploader
+from src.fetcher import Fetcher
+from src.uploader import DatabaseUploader
 
 
 @click.command()
@@ -24,8 +25,7 @@ def patent_fetcher(start_date, end_date):
             "password": os.getenv("POSTGRES_PASSWORD"),
             "username": os.getenv("POSTGRES_USER"),
             "database": os.getenv("POSTGRES_DB"),
-            "port": os.getenv("DB_PORT", 5432),
-            "engine": os.getenv("DB_ENGINE", "postgres")
+            "port": os.getenv("DB_PORT", 5432)
         }
         database_uploader = DatabaseUploader(filenames, database_config, table_name="patents")
         database_uploader.process()
